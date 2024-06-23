@@ -39,7 +39,7 @@ impl Nomad {
         &self,
         req: &JobCreateRequest,
     ) -> Result<JobCreateResponse, NomadError> {
-        let req = self.request(Method::POST, "/jobs").json(req);
+        let req = self.request(Method::POST, "jobs").json(req);
 
         self.send::<JobCreateResponse>(req).await
     }

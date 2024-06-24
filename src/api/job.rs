@@ -1,7 +1,10 @@
+use models::{JobCreateRequest, JobCreateResponse, JobListAllocationsParams};
 use reqwest::Method;
 
-use crate::api::job::models::{JobCreateRequest, JobCreateResponse};
-use crate::{Nomad, NomadError};
+use crate::{
+    models::{Allocation, Job},
+    Nomad, NomadError,
+};
 
 pub mod models {
     use serde::{Deserialize, Serialize};
@@ -31,6 +34,12 @@ pub mod models {
         pub last_contact: Option<i64>,
         pub warnings: Option<String>,
     }
+
+    #[derive(Debug, Default, Serialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct JobListAllocationsParams {
+        pub all: Option<bool>,
+    }
 }
 
 impl Nomad {
@@ -42,5 +51,24 @@ impl Nomad {
         let req = self.request(Method::POST, "jobs").json(req);
 
         self.send::<JobCreateResponse>(req).await
+    }
+
+    /// https://developer.hashicorp.com/nomad/api-docs/jobs#read-job
+    pub async fn job_read(&self, job_id: &str) -> Result<Job, NomadError> {
+        let req = self.request(Method::GET, &format!("job/{}", job_id));
+
+        self.send::<Job>(req).await
+    }
+
+    pub async fn job_list_allocations(
+        &self,
+        job_id: &str,
+        params: &JobListAllocationsParams,
+    ) -> Result<Vec<Allocation>, NomadError> {
+        let req = self
+            .request(Method::GET, &format!("job/{}/allocations", job_id))
+            .query(&params);
+
+        self.send::<Vec<Allocation>>(req).await
     }
 }

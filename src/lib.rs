@@ -90,6 +90,34 @@ impl Nomad {
             Err(e) => Err(NomadError::InvalidResponse(e)),
         }
     }
+
+    async fn send_plain(&self, mut builder: RequestBuilder) -> Result<String, NomadError> {
+        if let Some(token) = self.config.token.as_ref() {
+            builder = builder.header("X-Nomad-Token", token);
+        }
+
+        let request = builder.build().map_err(NomadError::RequestError)?;
+
+        let response = self
+            .client
+            .execute(request)
+            .await
+            .map_err(NomadError::ResponseError)?;
+
+        let status = response.status();
+        if !status.is_success() {
+            let body = response
+                .text()
+                .await
+                .map_err(|e| NomadError::UnexpectedResponseCode(status, e.to_string()))?;
+            return Err(NomadError::UnexpectedResponseCode(status, body));
+        }
+
+        match response.text().await {
+            Ok(body) => Ok(body),
+            Err(e) => Err(NomadError::InvalidResponse(e)),
+        }
+    }
 }
 
 impl Default for Nomad {

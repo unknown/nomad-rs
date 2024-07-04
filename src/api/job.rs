@@ -1,4 +1,6 @@
-use models::{JobCreateRequest, JobCreateResponse, JobListAllocationsParams};
+use models::{
+    JobCreateRequest, JobCreateResponse, JobListAllocationsParams, JobStopParams, JobStopResponse,
+};
 use reqwest::Method;
 
 use crate::{
@@ -40,6 +42,23 @@ pub mod models {
     pub struct JobListAllocationsParams {
         pub all: Option<bool>,
     }
+
+    #[derive(Debug, Default, Serialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct JobStopParams {
+        pub global: Option<bool>,
+        pub purge: Option<bool>,
+        pub namespace: Option<String>,
+    }
+
+    #[derive(Debug, Deserialize)]
+    #[serde(rename_all = "PascalCase")]
+    pub struct JobStopResponse {
+        #[serde(rename = "EvalID")]
+        pub eval_id: Option<String>,
+        pub eval_create_index: Option<u32>,
+        pub job_modify_index: Option<u32>,
+    }
 }
 
 impl Nomad {
@@ -70,5 +89,17 @@ impl Nomad {
             .query(&params);
 
         self.send::<Vec<Allocation>>(req).await
+    }
+
+    pub async fn job_stop(
+        &self,
+        job_id: &str,
+        params: &JobStopParams,
+    ) -> Result<JobStopResponse, NomadError> {
+        let req = self
+            .request(Method::DELETE, &format!("/job/{}", job_id))
+            .query(&params);
+
+        self.send::<JobStopResponse>(req).await
     }
 }

@@ -97,7 +97,7 @@ impl Nomad {
         params: &JobStopParams,
     ) -> Result<JobStopResponse, NomadError> {
         let req = self
-            .request(Method::DELETE, &format!("/job/{}", job_id))
+            .request(Method::DELETE, &format!("job/{}", job_id))
             .query(&params);
 
         self.send::<JobStopResponse>(req).await

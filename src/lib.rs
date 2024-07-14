@@ -39,6 +39,7 @@ impl Config {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct Nomad {
     client: Client,
     config: Config,
